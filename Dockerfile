@@ -1,20 +1,25 @@
-# Dockerfile para o novo Microsserviço de Storage
+# Dockerfile para o Microsserviço de Storage (VERSÃO FINAL)
 
 FROM node:20-alpine
 
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de dependência
+# Define o ambiente como 'development' ANTES de instalar.
+# Isso força o npm a instalar TODAS as dependências, incluindo as de desenvolvimento.
+ENV NODE_ENV=development
+
+# Copia os arquivos de manifesto de pacotes
 COPY package*.json ./
 
-# Instala TODAS as dependências (incluindo as de desenvolvimento como @nestjs/cli)
+# Instala as dependências
 RUN npm install
 
-# Copia todo o resto do código-fonte para o container
+# Copia o resto do código-fonte
 COPY . .
 
-# Expõe a porta que a nossa aplicação vai usar
+# Expõe a porta
 EXPOSE 3003
 
-# Comando para iniciar a aplicação em modo de desenvolvimento
+# Comando para iniciar a aplicação
 CMD ["npm", "run", "start:dev"]
