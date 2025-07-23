@@ -1,14 +1,15 @@
+// ARQUIVO: src/app.module.ts
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { StorageModule } from './storage/storage.module';
+import { StorageModule } from './storage.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
     }),
-    StorageModule, // Importa nosso novo módulo de storage
+    StorageModule,
   ],
 })
 export class AppModule {}

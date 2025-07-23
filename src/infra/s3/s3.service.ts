@@ -1,4 +1,4 @@
-// src/storage/storage.service.ts (VERSÃO FINAL E CORRETA)
+// ARQUIVO: src/infra/s3/s3.service.ts
 
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,8 +11,8 @@ import {
 import type { Express } from 'express';
 
 @Injectable()
-export class StorageService implements OnModuleInit {
-  private readonly logger = new Logger(StorageService.name);
+export class S3Service implements OnModuleInit {
+  private readonly logger = new Logger(S3Service.name);
   private readonly s3: S3Client;
 
   constructor(private readonly configService: ConfigService) {
@@ -35,11 +35,8 @@ export class StorageService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // CORRIGIDO: Garante que os buckets corretos ('originals' e 'preservation') existam.
     const requiredBuckets = ['originals', 'preservation'];
-
     this.logger.log(`Verificando buckets necessários: [${requiredBuckets.join(', ')}]`);
-
     for (const bucketName of requiredBuckets) {
       try {
         await this.s3.send(new HeadBucketCommand({ Bucket: bucketName }));
@@ -66,14 +63,12 @@ export class StorageService implements OnModuleInit {
     key: string,
   ): Promise<{ path: string; etag: string }> {
     this.logger.log(`Iniciando upload para bucket: [${bucket}], chave: [${key}]`);
-
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
     });
-
     try {
       const response = await this.s3.send(command);
       const filePath = `${bucket}/${key}`;
