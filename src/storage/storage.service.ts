@@ -1,3 +1,5 @@
+// src/storage/storage.service.ts (CORRIGIDO)
+
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -12,12 +14,9 @@ import type { Express } from 'express';
 export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   private readonly s3: S3Client;
-  private readonly defaultBucket: string;
 
   constructor(private readonly configService: ConfigService) {
     const endpoint = this.configService.get<string>('S3_ENDPOINT');
-    this.defaultBucket = this.configService.get<string>('S3_BUCKET', 'documentos');
-    
     this.logger.log(`[S3_CONFIG] Configurando cliente S3 para o endpoint: ${endpoint}`);
 
     if (!endpoint) {
@@ -35,11 +34,9 @@ export class StorageService implements OnModuleInit {
     });
   }
 
- async onModuleInit() {
-    const requiredBuckets = [
-      this.configService.get<string>('S3_BUCKET', 'documentos'),
-      'preservation', // Adicione o outro bucket aqui
-    ];
+  async onModuleInit() {
+    // ALTERAÇÃO: Garante que os buckets 'originals' e 'preservation' existam.
+    const requiredBuckets = ['originals', 'preservation'];
 
     this.logger.log(`Verificando buckets necessários: [${requiredBuckets.join(', ')}]`);
 
@@ -72,7 +69,7 @@ export class StorageService implements OnModuleInit {
 
     const command = new PutObjectCommand({
       Bucket: bucket,
-      Key: key,
+      Key: key, // O 'key' já funciona como o caminho completo (ex: "originals/id/arquivo.pdf")
       Body: file.buffer,
       ContentType: file.mimetype,
     });
