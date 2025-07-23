@@ -1,5 +1,3 @@
-// src/storage/storage.service.ts (VERSÃO FINAL E CORRETA)
-
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -34,9 +32,11 @@ export class StorageService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {
-    // CORRIGIDO: Garante que os buckets corretos ('originals' e 'preservation') existam.
-    const requiredBuckets = ['originals', 'preservation'];
+ async onModuleInit() {
+    const requiredBuckets = [
+      this.configService.get<string>('S3_BUCKET', 'documentos'),
+      'preservation', // Adicione o outro bucket aqui
+    ];
 
     this.logger.log(`Verificando buckets necessários: [${requiredBuckets.join(', ')}]`);
 
@@ -69,7 +69,7 @@ export class StorageService implements OnModuleInit {
 
     const command = new PutObjectCommand({
       Bucket: bucket,
-      Key: key,
+      Key: key, // O 'key' já funciona como o caminho completo (ex: "originals/id/arquivo.pdf")
       Body: file.buffer,
       ContentType: file.mimetype,
     });

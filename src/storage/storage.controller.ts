@@ -1,3 +1,5 @@
+// src/storage/storage.controller.ts (SEM ALTERAÇÕES)
+
 import {
   Controller,
   Post,
@@ -11,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './storage.service';
-import type { Express } from 'express'; 
+import type { Express } from 'express';
 
 @Controller('storage')
 export class StorageController {
