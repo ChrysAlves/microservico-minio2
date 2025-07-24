@@ -42,7 +42,6 @@ export class StorageController {
         return this.uploadFileUseCase.execute({ file, bucket, key });
     }
 
-    // O MÉTODO 'download' QUE ESTAVA AQUI FOI REMOVIDO
 
     @Post('generate-url')
     async generateUrl(@Body() body: DownloadBodyDto) {
