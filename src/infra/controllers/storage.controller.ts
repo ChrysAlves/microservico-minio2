@@ -1,23 +1,30 @@
 // ARQUIVO: src/infra/controllers/storage.controller.ts
 
+// Imports do upload e os básicos do NestJS
 import {
+    Body,
     Controller,
+    HttpCode,
+    HttpStatus,
+    MaxFileSizeValidator,
+    ParseFilePipe,
     Post,
     UploadedFile,
     UseInterceptors,
-    Body,
-    HttpCode,
-    HttpStatus,
-    ParseFilePipe,
-    MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadFileUseCase } from '../../domain/storage/use-cases/upload.use-case';
 import type { Express } from 'express';
+import { UploadUseCase } from '../../domain/storage/use-cases/upload.use-case';
+// Imports do generate-url
+import { GerarUrlUseCase } from '../../domain/storage/use-cases/generar-url.use-case';
+import { DownloadBodyDto } from '../../domain/storage/dtos/download.dto';
 
 @Controller('storage')
 export class StorageController {
-    constructor(private readonly uploadFileUseCase: UploadFileUseCase) { }
+    constructor(
+        private readonly uploadFileUseCase: UploadUseCase,
+        private readonly GerarUrlUseCase: GerarUrlUseCase, // A injeção do DownloadUseCase foi removida
+    ) { }
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))
@@ -25,7 +32,7 @@ export class StorageController {
     async uploadFile(
         @UploadedFile(
             new ParseFilePipe({
-                validators: [new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 100 })], // 100MB
+                validators: [new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 100 })],
             }),
         )
         file: Express.Multer.File,
@@ -33,5 +40,16 @@ export class StorageController {
         @Body('key') key: string,
     ) {
         return this.uploadFileUseCase.execute({ file, bucket, key });
+    }
+
+    // O MÉTODO 'download' QUE ESTAVA AQUI FOI REMOVIDO
+
+    @Post('generate-url')
+    async generateUrl(@Body() body: DownloadBodyDto) {
+        const url = await this.GerarUrlUseCase.execute(
+            body.bucket,
+            body.path,
+        );
+        return { url };
     }
 }

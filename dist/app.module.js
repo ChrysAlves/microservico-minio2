@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const storage_module_1 = require("./storage/storage.module");
+const storage_module_1 = require("./storage.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -18,7 +18,6 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-                envFilePath: '.env',
             }),
             storage_module_1.StorageModule,
         ],

@@ -1,12 +1,14 @@
 // ARQUIVO: src/infra/s3/s3.service.ts
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   S3Client,
   PutObjectCommand,
   CreateBucketCommand,
   HeadBucketCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import type { Express } from 'express';
 
@@ -14,17 +16,22 @@ import type { Express } from 'express';
 export class S3Service implements OnModuleInit {
   private readonly logger = new Logger(S3Service.name);
   private readonly s3: S3Client;
+  private readonly internalEndpoint: string;
+  private readonly publicUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    const endpoint = this.configService.get<string>('S3_ENDPOINT');
-    this.logger.log(`[S3_CONFIG] Configurando cliente S3 para o endpoint: ${endpoint}`);
+    this.internalEndpoint = this.configService.get<string>('S3_ENDPOINT');
+    this.publicUrl = this.configService.get<string>('MINIO_PUBLIC_URL');
 
-    if (!endpoint) {
-      throw new Error('Variável de ambiente S3_ENDPOINT não está definida!');
+    this.logger.log(`[S3_CONFIG] Endereço INTERNO configurado: ${this.internalEndpoint}`);
+    this.logger.log(`[S3_CONFIG] Endereço PÚBLICO configurado: ${this.publicUrl}`);
+
+    if (!this.internalEndpoint || !this.publicUrl) {
+      throw new Error('As variáveis de ambiente S3_ENDPOINT e MINIO_PUBLIC_URL devem ser definidas!');
     }
 
     this.s3 = new S3Client({
-      endpoint: endpoint,
+      endpoint: this.internalEndpoint,
       region: this.configService.get<string>('S3_REGION'),
       credentials: {
         accessKeyId: this.configService.get<string>('S3_ACCESS_KEY'),
@@ -77,6 +84,39 @@ export class S3Service implements OnModuleInit {
     } catch (error) {
       this.logger.error(`Falha no upload para o MinIO: ${error.message}`, error.stack);
       throw new Error('Falha ao salvar o arquivo no armazenamento.');
+    }
+  }
+
+
+  async generatePresignedUrl(bucket: string, path: string): Promise<string> {
+    this.logger.log(`Gerando URL pré-assinada para: [${bucket}/${path}]`);
+    
+    const filename = path.split('/').pop();
+
+    const publicS3Client = new S3Client({
+      endpoint: this.publicUrl,
+      region: this.configService.get<string>('S3_REGION'),
+      credentials: {
+        accessKeyId: this.configService.get<string>('S3_ACCESS_KEY'),
+        secretAccessKey: this.configService.get<string>('S3_SECRET_KEY'),
+      },
+      forcePathStyle: true,
+    });
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: path,
+      ResponseContentDisposition: `attachment; filename="${filename}"`
+    });
+
+    try {
+      const url = await getSignedUrl(publicS3Client, command, { expiresIn: 900 });
+      this.logger.log(`URL pública (com anexo forçado) gerada com sucesso: ${url}`);
+      return url;
+
+    } catch (error) {
+      this.logger.error(`Falha ao gerar URL pré-assinada para [${path}]`, error.stack);
+      throw new NotFoundException('Não foi possível gerar a URL para o arquivo especificado.');
     }
   }
 }

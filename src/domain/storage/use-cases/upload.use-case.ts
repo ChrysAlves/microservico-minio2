@@ -5,8 +5,8 @@ import { S3Service } from '../../../infra/s3/s3.service';
 import { UploadFileDto } from '../dtos/upload.dto';
 
 @Injectable()
-export class UploadFileUseCase {
-    private readonly logger = new Logger(UploadFileUseCase.name);
+export class UploadUseCase {
+    private readonly logger = new Logger(UploadUseCase.name);
 
     constructor(private readonly s3Service: S3Service) { }
 
