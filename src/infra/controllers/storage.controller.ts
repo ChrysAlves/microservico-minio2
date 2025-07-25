@@ -1,9 +1,7 @@
-// ARQUIVO: src/infra/controllers/storage.controller.ts
-
-// Imports do upload e os básicos do NestJS
 import {
     Body,
     Controller,
+    Delete,
     HttpCode,
     HttpStatus,
     MaxFileSizeValidator,
@@ -15,15 +13,16 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
 import { UploadUseCase } from '../../domain/storage/use-cases/upload.use-case';
-// Imports do generate-url
-import { GerarUrlUseCase } from '../../domain/storage/use-cases/generar-url.use-case';
+import { GerarUrlUseCase } from '../../domain/storage/use-cases/gerar-url.use-case';
+import { DeleteFileUseCase } from '../../domain/storage/use-cases/delete.use-case';
 import { DownloadBodyDto } from '../../domain/storage/dtos/download.dto';
 
 @Controller('storage')
 export class StorageController {
     constructor(
         private readonly uploadFileUseCase: UploadUseCase,
-        private readonly GerarUrlUseCase: GerarUrlUseCase, // A injeção do DownloadUseCase foi removida
+        private readonly generatePresignedUrlUseCase: GerarUrlUseCase,
+        private readonly deleteFileUseCase: DeleteFileUseCase,
     ) { }
 
     @Post('upload')
@@ -42,13 +41,18 @@ export class StorageController {
         return this.uploadFileUseCase.execute({ file, bucket, key });
     }
 
-
     @Post('generate-url')
     async generateUrl(@Body() body: DownloadBodyDto) {
-        const url = await this.GerarUrlUseCase.execute(
+        const url = await this.generatePresignedUrlUseCase.execute(
             body.bucket,
             body.path,
         );
         return { url };
+    }
+
+    @Delete('file')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async deleteFile(@Body() body: DownloadBodyDto): Promise<void> {
+        await this.deleteFileUseCase.execute(body.bucket, body.path);
     }
 }

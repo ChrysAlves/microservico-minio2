@@ -1,5 +1,3 @@
-// ARQUIVO: src/infra/s3/s3.service.ts
-
 import { Injectable, Logger, OnModuleInit, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -9,6 +7,7 @@ import {
   CreateBucketCommand,
   HeadBucketCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import type { Express } from 'express';
 
@@ -42,7 +41,7 @@ export class S3Service implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const requiredBuckets = ['originals', 'preservation'];
+    const requiredBuckets = ['originais', 'preservacoes'];
     this.logger.log(`Verificando buckets necessários: [${requiredBuckets.join(', ')}]`);
     for (const bucketName of requiredBuckets) {
       try {
@@ -87,6 +86,21 @@ export class S3Service implements OnModuleInit {
     }
   }
 
+  async deleteFile(bucket: string, path: string): Promise<void> {
+    this.logger.log(`Iniciando deleção do objeto: [${bucket}/${path}]`);
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: path,
+    });
+
+    try {
+      await this.s3.send(command);
+      this.logger.log(`Objeto [${path}] deletado com sucesso do bucket [${bucket}].`);
+    } catch (error) {
+      this.logger.error(`Falha ao deletar o objeto [${path}] do MinIO: ${error.message}`, error.stack);
+      throw new Error('Falha ao deletar o arquivo no armazenamento.');
+    }
+  }
 
   async generatePresignedUrl(bucket: string, path: string): Promise<string> {
     this.logger.log(`Gerando URL pré-assinada para: [${bucket}/${path}]`);
@@ -113,7 +127,6 @@ export class S3Service implements OnModuleInit {
       const url = await getSignedUrl(publicS3Client, command, { expiresIn: 900 });
       this.logger.log(`URL pública (com anexo forçado) gerada com sucesso: ${url}`);
       return url;
-
     } catch (error) {
       this.logger.error(`Falha ao gerar URL pré-assinada para [${path}]`, error.stack);
       throw new NotFoundException('Não foi possível gerar a URL para o arquivo especificado.');
