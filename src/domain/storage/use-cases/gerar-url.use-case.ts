@@ -1,4 +1,4 @@
-// ARQUIVO: src/domain/storage/use-cases/generate-presigned-url.use-case.ts
+
 
 import { Injectable, Logger } from '@nestjs/common';
 import { S3Service } from '../../../infra/s3/s3.service';
