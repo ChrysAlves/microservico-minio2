@@ -7,10 +7,10 @@ import {
   MaxFileSizeValidator,
   ParseFilePipe,
   Post,
-  UploadedFiles, // ALTERADO de UploadedFile
+  UploadedFiles, 
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express'; // ALTERADO de FileInterceptor
+import { FilesInterceptor } from '@nestjs/platform-express'; 
 import type { Express } from 'express';
 import { UploadUseCase } from '../../domain/storage/use-cases/upload.use-case';
 import { GerarUrlUseCase } from '../../domain/storage/use-cases/gerar-url.use-case';
