@@ -1,4 +1,4 @@
-
+// ARQUIVO: src/domain/storage/use-cases/generate-presigned-url.use-case.ts
 
 import { Injectable, Logger } from '@nestjs/common';
 import { S3Service } from '../../../infra/s3/s3.service';
@@ -9,8 +9,9 @@ export class GerarUrlUseCase {
 
     constructor(private readonly s3Service: S3Service) { }
 
-    async execute(bucket: string, path: string): Promise<string> {
+    async execute(bucket: string, path: string, filename?: string): Promise<string> {
         this.logger.log(`Executando caso de uso de geração de URL para: ${bucket}/${path}`);
-        return this.s3Service.generatePresignedUrl(bucket, path);
+
+        return this.s3Service.generatePresignedUrl(bucket, path, filename);
     }
 }
